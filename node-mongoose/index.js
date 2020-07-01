@@ -2,27 +2,50 @@ const mongoose = require('mongoose');
 const Dishes = require('./models/dishes');
 
 const url = 'mongodb://localhost:27017/conFusion';
-const connect = mongoose.connect(url);
-
+// const connect = mongoose.connect(url);
+const connect = mongoose.connect(url, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+  useFindAndModify: false,
+});
 connect.then((db) => {
   console.log('Connectes correctly to server');
 
-  var newDish = Dishes({
+  Dishes.create({
     name: 'Uthappizza',
     description: 'test',
-  });
-
-  newDish
-    .save()
+  })
     .then((dish) => {
       console.log(dish);
 
-      Dishes.find({}).exec();
+      return Dishes.findByIdAndUpdate(
+        dish._id,
+        {
+          $set: {
+            description: 'Updated test',
+          },
+        },
+        {
+          new: true,
+        }
+      ).exec();
     })
-    .then((dishes) => {
-      console.log(dishes);
+    .then((dish) => {
+      console.log(dish);
 
-      return Dishes.remove({});
+      dish.comments.push({
+        rating: 4,
+        comment: 'I am getting good feeling',
+        author: 'Lenard',
+      });
+
+      return dish.save();
+    })
+    .then((dish) => {
+      console.log(dish);
+
+      return Dishes.deleteMany({});
     })
     .then(() => {
       return mongoose.connection.close();
